@@ -3,10 +3,6 @@ name: Refresh IGDB access token
 on:
   workflow_dispatch:
     inputs:
-      repositories:
-        description: "Comma-separated OWNER/REPOSITORY targets (leave blank to use the IGDB_REPOSITORIES variable)"
-        required: false
-        type: string
       dry_run:
         description: "Request a token without changing repository secrets"
         required: false
