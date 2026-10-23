@@ -4,7 +4,22 @@
 
 It never writes tokens to disk or logs their values.
 
-## One-time setup
+## GitHub Actions manual run
+
+This repository includes a manual workflow at `.github/workflows/refresh-igdb-token.yml`. Before running it, add these values in this repository's **Settings → Secrets and variables → Actions**:
+
+| Type | Name | Value |
+| --- | --- | --- |
+| Secret | `TWITCH_CLIENT_ID` | Your Twitch application client ID |
+| Secret | `TWITCH_CLIENT_SECRET` | Your Twitch application client secret |
+| Secret | `TOKEN_GITHUB` | A fine-grained PAT with **Actions secrets: Read and write** access to both target repositories |
+| Variable | `IGDB_REPOSITORIES` | Comma-separated `OWNER/REPOSITORY` names, for example `owner/app-one,owner/app-two` |
+
+Then open the repository's **Actions** tab, select **Refresh IGDB access token**, choose **Run workflow**, and run it. You may optionally enter a repository list for that run only, or select dry-run to validate the configuration without updating secrets.
+
+`TOKEN_GITHUB` must be a separate PAT: the automatic `GITHUB_TOKEN` issued to this workflow does not have access to secrets in other repositories.
+
+## One-time setup for a non-GitHub runner
 
 1. Create a GitHub fine-grained personal access token that has **Actions secrets: Read and write** permission for both target repositories. Store it as `GITHUB_TOKEN` in the environment running this script.
 2. Store the Twitch app credentials as `TWITCH_CLIENT_ID` and `TWITCH_CLIENT_SECRET` there too. Do not put them in this repository.
