@@ -35,7 +35,24 @@ def get_igdb_token(client_id: str, client_secret: str) -> str:
         },
         timeout=30,
     )
-    response.raise_for_status()
+    if not response.ok:
+        # Twitch returns a useful OAuth error body (such as "invalid client") but
+        # requests' default HTTPError drops it.  Report only the OAuth error
+        # fields; never echo credentials or a possible token response.
+        detail = ""
+        try:
+            error_payload = response.json()
+            if isinstance(error_payload, dict):
+                error = error_payload.get("message") or error_payload.get("error")
+                description = error_payload.get("error_description")
+                values = [value for value in (error, description) if isinstance(value, str) and value]
+                detail = ": " + "; ".join(values) if values else ""
+        except (ValueError, requests.JSONDecodeError):
+            pass
+        raise RuntimeError(
+            f"Twitch rejected the client-credentials request (HTTP {response.status_code}){detail}. "
+            "Check that TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET belong to the same active Twitch application."
+        )
     payload: dict[str, Any] = response.json()
     token = payload.get("access_token")
     if not isinstance(token, str) or not token:
@@ -99,7 +116,7 @@ def main() -> int:
         if not repositories:
             raise RuntimeError("IGDB_REPOSITORIES must contain at least one OWNER/REPOSITORY")
         token = get_igdb_token(required_env("TWITCH_CLIENT_ID"), required_env("TWITCH_CLIENT_SECRET"))
-        github_token = required_env("GITHUB_TOKEN")
+        github_token = "" if args.dry_run else required_env("GITHUB_TOKEN")
         for repository in repositories:
             update_secret(repository, token, github_token, args.dry_run)
     except (RuntimeError, KeyError, requests.RequestException, json.JSONDecodeError) as error:
